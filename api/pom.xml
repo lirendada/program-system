@@ -5,7 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>com.liren</groupId>
-        <artifactId>program-system</artifactId>
+        <artifactId>oj-system</artifactId>
         <version>1.0-SNAPSHOT</version>
     </parent>
 
