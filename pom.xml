@@ -33,6 +33,7 @@
         <spring-boot-validation.version>3.5.6</spring-boot-validation.version>
 
         <common-core.version>1.0-SNAPSHOT</common-core.version>
+        <common-web.version>1.0-SNAPSHOT</common-web.version>
     </properties>
 
     <dependencies>
@@ -48,6 +49,13 @@
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
             <version>1.18.30</version>
+        </dependency>
+
+        <!-- hutool工具类依赖 -->
+        <dependency>
+            <groupId>cn.hutool</groupId>
+            <artifactId>hutool-core</artifactId>
+            <version>5.8.39</version>
         </dependency>
     </dependencies>
 

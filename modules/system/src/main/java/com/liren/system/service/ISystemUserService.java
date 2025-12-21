@@ -6,5 +6,5 @@ import com.liren.system.vo.LoginResponseVO;
 
 public interface ISystemUserService {
 
-    public LoginResponseVO login(LoginRequestDTO loginDTO);
+    LoginResponseVO login(LoginRequestDTO loginDTO);
 }

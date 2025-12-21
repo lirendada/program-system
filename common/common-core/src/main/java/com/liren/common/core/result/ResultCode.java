@@ -29,6 +29,9 @@ public enum ResultCode {
     BIZ_ERROR(6000, "业务处理失败"),
     DATA_NOT_FOUND(6001, "数据不存在"),
     DATA_CONFLICT(6002, "数据状态冲突"),
+    USER_NOT_FOUND(6003, "用户不存在"),
+    USER_ALREADY_EXIST(6004, "用户已存在"),
+    USER_PASSWORD_ERROR(6005, "用户名或密码错误"),
 
     /* ===================== 程序缺陷类（9xxx） ===================== */
     NULL_POINTER(9001, "空指针异常"),
