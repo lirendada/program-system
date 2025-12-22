@@ -11,12 +11,14 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+@Slf4j
 @RestController
 @RequestMapping("/system/user")
 @Tag(name = "管理员用户API")
@@ -43,6 +45,4 @@ public class SystemUserController {
     public Result<LoginResponseVO> login(@Valid @RequestBody LoginRequestDTO loginDTO) {
         return Result.success(systemUserService.login(loginDTO));
     }
-
-
 }

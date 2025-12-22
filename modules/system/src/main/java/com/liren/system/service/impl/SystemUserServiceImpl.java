@@ -3,6 +3,7 @@ package com.liren.system.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.liren.common.core.result.ResultCode;
+import com.liren.common.core.utils.BCryptUtil;
 import com.liren.system.dto.LoginRequestDTO;
 import com.liren.system.entity.SystemUserEntity;
 import com.liren.system.exception.SystemUserException;
@@ -30,7 +31,7 @@ public class SystemUserServiceImpl implements ISystemUserService {
         }
 
         // 到这说明用户存在，开始校验密码
-        if(!user.getPassword().equals(loginDTO.getPassword())) {
+        if(!BCryptUtil.isMatch(loginDTO.getPassword(), user.getPassword())) {
             throw new SystemUserException(ResultCode.USER_PASSWORD_ERROR);
         }
 

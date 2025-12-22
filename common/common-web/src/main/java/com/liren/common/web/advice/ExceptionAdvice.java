@@ -3,11 +3,14 @@ package com.liren.common.web.advice;
 import com.liren.common.core.exception.BizException;
 import com.liren.common.core.result.Result;
 import com.liren.common.core.result.ResultCode;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import jakarta.servlet.http.HttpServletRequest;
 
 import java.io.IOException;
 
+@Slf4j
 @RestControllerAdvice
 public class ExceptionAdvice {
 
@@ -15,7 +18,9 @@ public class ExceptionAdvice {
      * ==================== 业务异常 ====================
      */
     @ExceptionHandler(BizException.class)
-    public Result<?> handleBizException(BizException e) {
+    public Result<?> handleBizException(BizException e, HttpServletRequest request) {
+        String requestURI = request.getRequestURI();
+        log.error("请求地址'{}',发生业务异常：{}.", requestURI, e.getMessage(), e);
         return Result.fail(e.getCode(), e.getMessage());
     }
 
@@ -24,7 +29,9 @@ public class ExceptionAdvice {
      */
 
     @ExceptionHandler(IllegalArgumentException.class)
-    public Result<?> handleIllegalArgumentException(IllegalArgumentException e) {
+    public Result<?> handleIllegalArgumentException(IllegalArgumentException e, HttpServletRequest request) {
+        String requestURI = request.getRequestURI();
+        log.error("请求地址'{}',发生参数不合法异常.", requestURI, e);
         return Result.fail(
                 ResultCode.PARAM_ILLEGAL.getCode(),
                 ResultCode.PARAM_ILLEGAL.getMessage()
@@ -32,7 +39,9 @@ public class ExceptionAdvice {
     }
 
     @ExceptionHandler(NumberFormatException.class)
-    public Result<?> handleNumberFormatException(NumberFormatException e) {
+    public Result<?> handleNumberFormatException(NumberFormatException e, HttpServletRequest request) {
+        String requestURI = request.getRequestURI();
+        log.error("请求地址'{}',发生参数格式错误.", requestURI, e);
         return Result.fail(
                 ResultCode.PARAM_FORMAT_ERROR.getCode(),
                 ResultCode.PARAM_FORMAT_ERROR.getMessage()
@@ -44,7 +53,9 @@ public class ExceptionAdvice {
      */
 
     @ExceptionHandler(NullPointerException.class)
-    public Result<?> handleNullPointerException(NullPointerException e) {
+    public Result<?> handleNullPointerException(NullPointerException e, HttpServletRequest request) {
+        String requestURI = request.getRequestURI();
+        log.error("请求地址'{}',发生空指针异常.", requestURI, e);
         return Result.fail(
                 ResultCode.NULL_POINTER.getCode(),
                 ResultCode.NULL_POINTER.getMessage()
@@ -52,7 +63,9 @@ public class ExceptionAdvice {
     }
 
     @ExceptionHandler(ClassCastException.class)
-    public Result<?> handleClassCastException(ClassCastException e) {
+    public Result<?> handleClassCastException(ClassCastException e, HttpServletRequest request) {
+        String requestURI = request.getRequestURI();
+        log.error("请求地址'{}',发生类型转换异常.", requestURI, e);
         return Result.fail(
                 ResultCode.CLASS_CAST.getCode(),
                 ResultCode.CLASS_CAST.getMessage()
@@ -60,7 +73,9 @@ public class ExceptionAdvice {
     }
 
     @ExceptionHandler(IndexOutOfBoundsException.class)
-    public Result<?> handleIndexOutOfBoundsException(IndexOutOfBoundsException e) {
+    public Result<?> handleIndexOutOfBoundsException(IndexOutOfBoundsException e, HttpServletRequest request) {
+        String requestURI = request.getRequestURI();
+        log.error("请求地址'{}',发生数据索引越界异常.", requestURI, e);
         return Result.fail(
                 ResultCode.INDEX_OUT_OF_BOUNDS.getCode(),
                 ResultCode.INDEX_OUT_OF_BOUNDS.getMessage()
@@ -72,7 +87,9 @@ public class ExceptionAdvice {
      */
 
     @ExceptionHandler(IOException.class)
-    public Result<?> handleIOException(IOException e) {
+    public Result<?> handleIOException(IOException e, HttpServletRequest request) {
+        String requestURI = request.getRequestURI();
+        log.error("请求地址'{}',发生IO 操作异常.", requestURI, e);
         return Result.fail(
                 ResultCode.IO_ERROR.getCode(),
                 ResultCode.IO_ERROR.getMessage()
@@ -83,7 +100,9 @@ public class ExceptionAdvice {
      * ==================== 运行时异常兜底 ====================
      */
     @ExceptionHandler(RuntimeException.class)
-    public Result<?> handleRuntimeException(RuntimeException e) {
+    public Result<?> handleRuntimeException(RuntimeException e, HttpServletRequest request) {
+        String requestURI = request.getRequestURI();
+        log.error("请求地址'{}',发生运行时异常.", requestURI, e);
         return Result.fail(
                 ResultCode.RUNTIME_ERROR.getCode(),
                 ResultCode.RUNTIME_ERROR.getMessage()
@@ -94,7 +113,9 @@ public class ExceptionAdvice {
      * ==================== 最终兜底异常 ====================
      */
     @ExceptionHandler(Exception.class)
-    public Result<?> handleException(Exception e) {
+    public Result<?> handleException(Exception e, HttpServletRequest request) {
+        String requestURI = request.getRequestURI();
+        log.error("请求地址'{}',发生系统内部错误.", requestURI, e);
         return Result.fail(
                 ResultCode.SYSTEM_ERROR.getCode(),
                 ResultCode.SYSTEM_ERROR.getMessage()
