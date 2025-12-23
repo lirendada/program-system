@@ -1,0 +1,16 @@
+spring:
+  application:
+    name: gateway-service  # 应用名称
+
+  profiles:
+    active: dev
+
+  cloud:
+    nacos:
+      discovery:
+        server-addr: lirendada.art:8848
+        namespace: b3187baa-a0e0-497a-a2cb-043eeeff9b09
+      config:
+        server-addr: lirendada.art:8848
+        namespace: b3187baa-a0e0-497a-a2cb-043eeeff9b09
+        file-extension: yaml

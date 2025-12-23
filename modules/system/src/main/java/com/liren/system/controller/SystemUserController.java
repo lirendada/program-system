@@ -48,7 +48,7 @@ public class SystemUserController {
     }
 
     @RequestMapping("/test")
-    public void test() {
-        log.info(BCryptUtil.encode("123123"));
+    public Result<String> test() {
+        return Result.success("test");
     }
 }
