@@ -8,11 +8,10 @@ import java.time.LocalDateTime;
 
 @Data
 @NoArgsConstructor
-public class BaseEntity implements Serializable {
-    private static final long serialVersionUID = 1L;
-
+public class BaseEntity extends BaseTimeEntity {
+    /** 创建者 */
     private Long createBy;
+
+    /** 更新者 */
     private Long updateBy;
-    private LocalDateTime createTime;
-    private LocalDateTime updateTime;
 }
