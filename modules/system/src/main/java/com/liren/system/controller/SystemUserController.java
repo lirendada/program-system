@@ -49,6 +49,13 @@ public class SystemUserController {
 
     @RequestMapping("/test")
     public Result<String> test() {
+        String password = "123456";
+        String encoded = BCryptUtil.encode(password);
+        System.out.println("加密后的密码: " + encoded);
+
+        // 测试验证
+        boolean match = BCryptUtil.isMatch("123456", encoded);
+        System.out.println("验证结果: " + match);
         return Result.success("test");
     }
 }

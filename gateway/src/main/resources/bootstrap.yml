@@ -9,8 +9,8 @@ spring:
     nacos:
       discovery:
         server-addr: lirendada.art:8848
-        namespace: b3187baa-a0e0-497a-a2cb-043eeeff9b09
+        namespace: 3e8d6cf0-32cd-43c0-8279-9fda3da2265f
       config:
         server-addr: lirendada.art:8848
-        namespace: b3187baa-a0e0-497a-a2cb-043eeeff9b09
+        namespace: 3e8d6cf0-32cd-43c0-8279-9fda3da2265f
         file-extension: yaml

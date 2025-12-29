@@ -90,6 +90,9 @@ public class RedisUtil {
     /**
      * 获取list中存储数据数量
      */
+    public long size(String key) {
+        return redisTemplate.opsForList().size(key);
+    }
 
 
     /**
