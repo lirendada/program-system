@@ -2,9 +2,9 @@ package com.liren.system.controller;
 
 import com.liren.common.core.result.Result;
 import com.liren.common.core.utils.BCryptUtil;
-import com.liren.system.dto.LoginRequestDTO;
+import com.liren.system.dto.LoginDTO;
 import com.liren.system.service.ISystemUserService;
-import com.liren.system.vo.LoginResponseVO;
+import com.liren.system.vo.LoginVO;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -36,14 +36,14 @@ public class SystemUserController {
                 description = "登录信息",
                 content = @Content(
                         mediaType = "application/json",
-                        schema = @Schema(implementation = LoginRequestDTO.class)
+                        schema = @Schema(implementation = LoginDTO.class)
             )
     ))
     @ApiResponses(value = {
             @ApiResponse(responseCode = "6003", description = "用户不存在"),
             @ApiResponse(responseCode = "6005", description = "用户名或密码错误"),
     })
-    public Result<LoginResponseVO> login(@Valid @RequestBody LoginRequestDTO loginDTO) {
+    public Result<LoginVO> login(@Valid @RequestBody LoginDTO loginDTO) {
         return Result.success(systemUserService.login(loginDTO));
     }
 

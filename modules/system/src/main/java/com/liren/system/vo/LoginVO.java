@@ -7,7 +7,7 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class LoginResponseVO {
+public class LoginVO {
     private Long userId;
     private String userAccount;
     private String nickName;

@@ -4,6 +4,7 @@ import com.liren.common.core.exception.BizException;
 import com.liren.common.core.result.Result;
 import com.liren.common.core.result.ResultCode;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import jakarta.servlet.http.HttpServletRequest;
@@ -46,6 +47,16 @@ public class ExceptionAdvice {
                 ResultCode.PARAM_FORMAT_ERROR.getCode(),
                 ResultCode.PARAM_FORMAT_ERROR.getMessage()
         );
+    }
+
+    /**
+     * 处理 JSON 解析错误（如参数类型不匹配、JSON 格式错误）
+     */
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public Result<?> handleHttpMessageNotReadableException(HttpMessageNotReadableException e, HttpServletRequest request) {
+        String requestURI = request.getRequestURI();
+        log.error("请求地址'{}', 参数格式错误.", requestURI, e);
+        return Result.fail(ResultCode.PARAM_FORMAT_ERROR.getCode(), "参数格式错误：请检查数值范围或类型");
     }
 
     /**

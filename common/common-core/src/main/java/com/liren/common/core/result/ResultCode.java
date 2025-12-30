@@ -32,6 +32,8 @@ public enum ResultCode {
     USER_NOT_FOUND(6003, "用户不存在"),
     USER_ALREADY_EXIST(6004, "用户已存在"),
     USER_PASSWORD_ERROR(6005, "用户名或密码错误"),
+    SUBJECT_NOT_FOUND(6006, "题目不存在"),
+    SUBJECT_TITLE_EXIST(6007, "题目名称已存在，请勿重复添加"),
 
     /* ===================== 程序缺陷类（9xxx） ===================== */
     NULL_POINTER(9001, "空指针异常"),

@@ -4,12 +4,12 @@ import cn.hutool.core.bean.BeanUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.liren.common.core.result.ResultCode;
 import com.liren.common.core.utils.BCryptUtil;
-import com.liren.system.dto.LoginRequestDTO;
+import com.liren.system.dto.LoginDTO;
 import com.liren.system.entity.SystemUserEntity;
 import com.liren.system.exception.SystemUserException;
 import com.liren.system.mapper.SystemUserMapper;
 import com.liren.system.service.ISystemUserService;
-import com.liren.system.vo.LoginResponseVO;
+import com.liren.system.vo.LoginVO;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -21,7 +21,7 @@ public class SystemUserServiceImpl implements ISystemUserService {
     private SystemUserMapper systemUserMapper;
 
     @Override
-    public LoginResponseVO login(LoginRequestDTO loginDTO) {
+    public LoginVO login(LoginDTO loginDTO) {
         // 获取用户信息
         LambdaQueryWrapper<SystemUserEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(SystemUserEntity::getUserAccount, loginDTO.getUserAccount());
@@ -38,7 +38,7 @@ public class SystemUserServiceImpl implements ISystemUserService {
 
         // 到这说明密码正确，开始返回登录信息
         log.info("用户登录成功，用户账号：{}", user);
-        LoginResponseVO responseVO = new LoginResponseVO();
+        LoginVO responseVO = new LoginVO();
         BeanUtil.copyProperties(user, responseVO);
         return responseVO;
     }

@@ -5,6 +5,7 @@ USE oj_system;
 
 -- ==================================================================================
 -- 1. 系统管理模块 (后台管理员)
+-- 简化点：移除了角色表、权限表，仅保留管理员账号
 -- ==================================================================================
 
 DROP TABLE IF EXISTS `tb_sys_user`;
@@ -24,7 +25,7 @@ CREATE TABLE `tb_sys_user` (
 
 -- 初始化唯一的超级管理员 (密码: 123456)
 INSERT INTO `tb_sys_user` (`user_id`, `user_account`, `password`, `nick_name`) VALUES
-    (1, 'admin', '$2a$10$EhZ8H6WLzovJVKEsqrJG0OYmB7XvqLzDdLjXvCdJm5t5L.hJb8zYC', '超级管理员');
+    (1, 'admin', '$2a$10$rd71IhdgCfR6IcjNltq2oOXz9fL9uYtwMO1F7fI4yRSsfiQZFBVP2', '超级管理员');
 
 
 -- ==================================================================================
@@ -55,8 +56,8 @@ CREATE TABLE `tb_user` (
 
 -- 初始化测试用户 (密码: 123456)
 INSERT INTO `tb_user` (`user_id`, `user_account`, `password`, `nick_name`, `email`, `school`, `rating`) VALUES
-                                                                                                            (1001, 'user001', '$2a$10$xgoA31qFm6UT4fLjX.3rRO4/EdZErJImp4hF/VgvqTTQGG7SUlQXC', '选手小明', 'user001@test.com', '清华大学', 1500),
-                                                                                                            (1002, 'user002', '$2a$10$xgoA31qFm6UT4fLjX.3rRO4/EdZErJImp4hF/VgvqTTQGG7SUlQXC', '选手小红', 'user002@test.com', '北京大学', 1600);
+                                                                                                            (1001, 'user001', '$2a$10$rd71IhdgCfR6IcjNltq2oOXz9fL9uYtwMO1F7fI4yRSsfiQZFBVP2', '选手小明', 'user001@test.com', '清华大学', 1500),
+                                                                                                            (1002, 'user002', '$2a$10$rd71IhdgCfR6IcjNltq2oOXz9fL9uYtwMO1F7fI4yRSsfiQZFBVP2', '选手小红', 'user002@test.com', '北京大学', 1600);
 
 
 -- ==================================================================================
@@ -81,6 +82,7 @@ CREATE TABLE `tb_problem` (
                               `source` VARCHAR(200) COMMENT '来源',
                               `status` TINYINT NOT NULL DEFAULT 1 COMMENT '状态：0-隐藏 1-正常',
                               `create_by` BIGINT COMMENT '创建人',
+                              `update_by` BIGINT COMMENT '更新人',
                               `create_time` DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
                               `update_time` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
                               `deleted` TINYINT DEFAULT 0 COMMENT '逻辑删除',
@@ -116,6 +118,7 @@ CREATE TABLE `tb_test_case` (
                                 `input` TEXT NOT NULL COMMENT '输入数据',
                                 `output` TEXT NOT NULL COMMENT '期望输出',
                                 `create_time` DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+                                `update_time` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
                                 PRIMARY KEY (`case_id`),
                                 KEY `idx_problem_id` (`problem_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='测试用例表';
@@ -135,7 +138,10 @@ CREATE TABLE `tb_contest` (
                               `start_time` DATETIME NOT NULL COMMENT '开始时间',
                               `end_time` DATETIME NOT NULL COMMENT '结束时间',
                               `create_by` BIGINT COMMENT '创建人',
+                              `update_by` BIGINT COMMENT '更新人',
                               `create_time` DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+                              `update_time` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+
                               `deleted` TINYINT DEFAULT 0 COMMENT '逻辑删除',
                               PRIMARY KEY (`contest_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='竞赛表';
@@ -143,7 +149,7 @@ CREATE TABLE `tb_contest` (
 -- 4.2 竞赛-题目关联表
 DROP TABLE IF EXISTS `tb_contest_problem`;
 CREATE TABLE `tb_contest_problem` (
-                                      `id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '主键ID',
+                                      `id` BIGINT NOT NULL COMMENT '主键ID',
                                       `contest_id` BIGINT NOT NULL COMMENT '竞赛ID',
                                       `problem_id` BIGINT NOT NULL COMMENT '题目ID',
                                       `display_id` VARCHAR(10) NOT NULL COMMENT '展示编号(A,B,C...)',
@@ -154,7 +160,7 @@ CREATE TABLE `tb_contest_problem` (
 -- 4.3 竞赛报名表
 DROP TABLE IF EXISTS `tb_contest_registration`;
 CREATE TABLE `tb_contest_registration` (
-                                           `id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '主键ID',
+                                           `id` BIGINT NOT NULL COMMENT '主键ID',
                                            `contest_id` BIGINT NOT NULL COMMENT '竞赛ID',
                                            `user_id` BIGINT NOT NULL COMMENT '用户ID',
                                            `create_time` DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '报名时间',
