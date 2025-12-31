@@ -1,1 +1,2 @@
 com.liren.common.web.config.ExceptionConfig
+com.liren.common.web.config.WebMvcConfig

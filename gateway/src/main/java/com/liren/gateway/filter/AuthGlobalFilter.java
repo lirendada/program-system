@@ -5,7 +5,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.liren.common.core.result.Result;
 import com.liren.common.core.result.ResultCode;
 import com.liren.common.core.utils.JwtUtil;
+import com.liren.gateway.properties.AuthWhiteList;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
 import org.springframework.core.Ordered;
@@ -20,7 +22,6 @@ import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
 import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -34,20 +35,14 @@ public class AuthGlobalFilter implements GlobalFilter, Ordered {
     private final AntPathMatcher antPathMatcher = new AntPathMatcher();
 
     // 白名单接口 (无需登录即可访问)
-    // 后面可以把这个做成配置项放在 Nacos 里动态调整
-    private static final List<String> WHITELIST = Arrays.asList(
-            "/user/login",           // 登录
-            "/user/register",        // 注册
-            "/doc.html",             // Swagger UI
-            "/webjars/**",           // Swagger 资源
-            "/v3/api-docs/**",       // Swagger 接口文档
-            "/favicon.ico"
-    );
+    @Autowired
+    private AuthWhiteList whitelist;
 
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
         ServerHttpRequest request = exchange.getRequest();
         String path = request.getURI().getPath();
+        log.info("AuthGlobalFilter: path={}", path);
 
         // 1. 白名单校验：如果是白名单接口，直接放行
         if (isWhitelist(path)) {
@@ -91,9 +86,12 @@ public class AuthGlobalFilter implements GlobalFilter, Ordered {
      * 检查是否在白名单中
      */
     private boolean isWhitelist(String path) {
-        for (String pattern : WHITELIST) {
-            if (antPathMatcher.match(pattern, path)) {
-                return true;
+        List<String> list = whitelist.getWhitelist();
+        if(list != null) {
+            for (String pattern : list) {
+                if (antPathMatcher.match(pattern, path)) {
+                    return true;
+                }
             }
         }
         return false;
