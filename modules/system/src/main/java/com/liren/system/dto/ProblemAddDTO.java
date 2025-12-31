@@ -9,7 +9,7 @@ import java.util.List;
 
 @Data
 @Schema(description = "题目信息传输对象")
-public class ProblemDTO {
+public class ProblemAddDTO {
 
     @Schema(description = "题目ID (更新时必填)")
 //    // 只有在 Update 分组下，才校验 ID 不为空

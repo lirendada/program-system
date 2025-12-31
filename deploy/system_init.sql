@@ -184,3 +184,9 @@ INSERT INTO `tb_problem` (`problem_id`, `title`, `difficulty`, `description`, `t
 -- 插入示例用例
 INSERT INTO `tb_test_case` (`case_id`, `problem_id`, `input`, `output`) VALUES
                                                                             (1, 1, '1 2', '3'), (2, 1, '10 20', '30');
+
+ALTER TABLE `tb_problem`
+    ADD COLUMN `submit_num` int(11) NOT NULL DEFAULT 0 COMMENT '提交数' AFTER `difficulty`;
+
+ALTER TABLE `tb_problem`
+    ADD COLUMN `accepted_num` int(11) NOT NULL DEFAULT 0 COMMENT '通过数' AFTER `submit_num`;

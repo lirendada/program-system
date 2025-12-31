@@ -25,6 +25,10 @@ public class ProblemEntity extends BaseEntity {
      */
     private Integer difficulty;
 
+    private Integer submitNum; // 提交数
+
+    private Integer acceptedNum; // 通过数
+
     private String description; // 题目描述
 
     private String inputDescription; // 输入描述
