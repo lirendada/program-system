@@ -12,6 +12,7 @@ import java.util.List;
  */
 @Data
 @EqualsAndHashCode(callSuper = true)
+// TODO：添加swagger信息
 public class ProblemQueryRequest extends PageRequest implements Serializable {
 
     /**

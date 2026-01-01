@@ -9,6 +9,7 @@ import java.io.Serializable;
 import java.util.Date;
 import java.util.List;
 
+//TODO：补充swagger信息
 @Data
 public class ProblemVO implements Serializable {
     // 必须转 String，防止前端精度丢失
@@ -26,7 +27,7 @@ public class ProblemVO implements Serializable {
     /**
      * 标签列表
      */
-    private List<String> tags;
+    private List<ProblemTagVO> tags;
 
     /**
      * 提交数

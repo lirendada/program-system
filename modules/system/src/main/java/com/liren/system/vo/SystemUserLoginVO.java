@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+//TODO：补充swagger信息
 @Data
 @AllArgsConstructor
 @NoArgsConstructor

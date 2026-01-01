@@ -2,6 +2,7 @@ package com.liren.system.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.liren.common.core.result.ResultCode;
 import com.liren.common.core.utils.BCryptUtil;
 import com.liren.system.dto.SystemUserLoginDTO;
@@ -16,16 +17,14 @@ import org.springframework.stereotype.Service;
 
 @Slf4j
 @Service
-public class SystemUserServiceImpl implements ISystemUserService {
-    @Autowired
-    private SystemUserMapper systemUserMapper;
+public class SystemUserServiceImpl extends ServiceImpl<SystemUserMapper, SystemUserEntity> implements ISystemUserService {
 
     @Override
     public SystemUserLoginVO login(SystemUserLoginDTO systemUserLoginDTO) {
         // 获取用户信息
         LambdaQueryWrapper<SystemUserEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(SystemUserEntity::getUserAccount, systemUserLoginDTO.getUserAccount());
-        SystemUserEntity user = systemUserMapper.selectOne(queryWrapper);
+        SystemUserEntity user = this.getOne(queryWrapper);
         if(user == null) {
             throw new SystemUserException(ResultCode.USER_NOT_FOUND);
         }

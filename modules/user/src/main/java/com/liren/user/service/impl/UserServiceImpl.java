@@ -19,6 +19,7 @@ public class UserServiceImpl implements IUserService {
     private UserMapper userMapper;
 
 
+    //TODO：redis优化
     @Override
     public String login(UserLoginDTO userLoginDTO) {
         // 1. 判断用户是否存在

@@ -190,3 +190,34 @@ ALTER TABLE `tb_problem`
 
 ALTER TABLE `tb_problem`
     ADD COLUMN `accepted_num` int(11) NOT NULL DEFAULT 0 COMMENT '通过数' AFTER `submit_num`;
+
+
+-- 1. 确保标签数据丰富 (包含颜色)
+TRUNCATE TABLE tb_problem_tag;
+INSERT INTO `tb_problem_tag` (`tag_id`, `tag_name`, `tag_color`) VALUES
+(1, '数组', '#1890ff'),       -- 蓝色
+(2, '动态规划', '#faad14'),   -- 橙色
+(3, '二分查找', '#52c41a'),   -- 绿色
+(4, '哈希表', '#f5222d');     -- 红色
+
+-- 2. 插入几个不同类型的题目
+-- 1001: 只有数组 (简单)
+-- 1002: 动态规划 + 数组 (中等)
+-- 1003: 动态规划 + 二分查找 (困难)
+-- 1004: 哈希表 (简单)
+TRUNCATE TABLE tb_problem;
+INSERT INTO `tb_problem` (`problem_id`, `title`, `difficulty`, `description`, `status`, `create_time`) VALUES
+(1001, '两数之和', 1, '给定一个整数数组...', 1, NOW()),
+(1002, '最长递增子序列', 2, '给你一个整数数组 nums...', 1, NOW()),
+(1003, '最长递增子序列 II', 3, '这是困难版本...', 1, NOW()),
+(1004, '有效的字母异位词', 1, '给定两个字符串 s 和 t...', 1, NOW());
+
+-- 3. 建立关联 (这是最关键的)
+TRUNCATE TABLE tb_problem_tag_relation;
+INSERT INTO `tb_problem_tag_relation` (`problem_id`, `tag_id`) VALUES
+(1001, 1),          -- 两数之和 -> 数组
+(1002, 1),          -- 最长递增子序列 -> 数组
+(1002, 2),          -- 最长递增子序列 -> 动态规划
+(1003, 2),          -- 最长递增子序列 II -> 动态规划
+(1003, 3),          -- 最长递增子序列 II -> 二分查找
+(1004, 4);          -- 有效的字母异位词 -> 哈希表

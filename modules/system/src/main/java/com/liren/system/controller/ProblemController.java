@@ -24,12 +24,14 @@ public class ProblemController {
 
     @PostMapping("/add")
     @Operation(summary = "新增题目")
+    // TODO：完善swagger参数描述
     public Result<Boolean> addProblem(@Validated @RequestBody ProblemAddDTO problemAddDTO) {
         return Result.success(problemService.addProblem(problemAddDTO));
     }
 
     @PostMapping("/list/page")
-    @Operation(summary = "分页获取题目列表", description = "支持搜索，返回脱敏数据")
+    @Operation(summary = "分页获取题目列表", description = "支持条件搜索，返回脱敏数据")
+    // TODO：完善swagger参数描述
     public Result<Page<ProblemVO>> listProblemVOByPage(@RequestBody ProblemQueryRequest queryRequest) {
         // 1. 限制爬虫/恶意请求
         long size = queryRequest.getPageSize();

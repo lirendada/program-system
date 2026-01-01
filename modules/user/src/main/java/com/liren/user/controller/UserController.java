@@ -21,6 +21,7 @@ public class UserController {
 
     @PostMapping("/login")
     @Operation(summary = "用户登录", description = "返回 JWT Token")
+    // TODO：完善swagger参数描述
     public Result<String> login(@Valid @RequestBody UserLoginDTO loginDTO) {
         return Result.success(userService.login(loginDTO));
     }

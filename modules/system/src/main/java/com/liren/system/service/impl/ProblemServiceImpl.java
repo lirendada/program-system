@@ -17,15 +17,14 @@ import com.liren.system.mapper.ProblemMapper;
 import com.liren.system.mapper.ProblemTagMapper;
 import com.liren.system.mapper.ProblemTagRelationMapper;
 import com.liren.system.service.IProblemService;
+import com.liren.system.vo.ProblemTagVO;
 import com.liren.system.vo.ProblemVO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -97,23 +96,23 @@ public class ProblemServiceImpl extends ServiceImpl<ProblemMapper, ProblemEntity
      */
     @Override
     public Page<ProblemVO> getProblemList(ProblemQueryRequest queryRequest) {
-        // === 1. 处理标签筛选 (Filtering) ===
-        Set<Long> filterProblemIds = null;
+        // === 1. 找出所有满足tags条件的题目id ===
+        Set<Long> filterProblemIds = null; // 之所以不用List，是因为可能有重复的题目
         if(CollectionUtil.isNotEmpty(queryRequest.getTags())) {
             List<String> tags = queryRequest.getTags();
 
             // 1.1 查出所有标签id
             LambdaQueryWrapper<ProblemTagEntity> tagWrapper = new LambdaQueryWrapper<>();
-            tagWrapper.in(ProblemTagEntity::getTagId, tags);
+            tagWrapper.in(ProblemTagEntity::getTagName, tags);
             List<ProblemTagEntity> tagEntities = problemTagMapper.selectList(tagWrapper);
 
-            // 如果数据库里存在的标签数量 < 用户请求的数量，说明必然无法满足 "包含所有标签" 的条件
+            // 如果数据库里存在的标签数量 < 用户请求的数量，说明必然无法满足 "包含所有标签" 的条件，直接返回空数据
             if(tagEntities.size() < tags.size()) {
                 return new Page<>(queryRequest.getCurrent(), queryRequest.getPageSize());
             }
             List<Long> tagIds = tagEntities.stream().map(ProblemTagEntity::getTagId).collect(Collectors.toList());
 
-            // 1.2 找出同时包含这些 tagId 的题目id
+            // 1.2 找出同时包含这些 tagId 的题目 problemId
             // 查出所有关联记录
             LambdaQueryWrapper<ProblemTagRelationEntity> relationWrapper = new LambdaQueryWrapper<>();
             relationWrapper.in(ProblemTagRelationEntity::getTagId, tagIds);
@@ -123,7 +122,7 @@ public class ProblemServiceImpl extends ServiceImpl<ProblemMapper, ProblemEntity
             Map<Long, Long> collect = problemTagRelationEntities.stream()
                     .collect(Collectors.groupingBy(ProblemTagRelationEntity::getProblemId, Collectors.counting()));
 
-            // 只有命中次数 == 请求标签数量的题目，才是我们要的题目
+            // 只有命中标签次数 == 请求标签数量的题目，才是符合条件的题目
             filterProblemIds = collect.entrySet().stream()
                     .filter(entry -> entry.getValue() == tags.size())
                     .map(Map.Entry::getKey)
@@ -133,12 +132,12 @@ public class ProblemServiceImpl extends ServiceImpl<ProblemMapper, ProblemEntity
             }
         }
 
-        // === 2. 构建主查询 (Main Query) ===
+        // === 2. 构建其它查询条件 ===
         long current = queryRequest.getCurrent();
         long size = queryRequest.getPageSize();
         LambdaQueryWrapper<ProblemEntity> wrapper = new LambdaQueryWrapper<>();
 
-        // 标签筛选
+        // 根据上面标签筛选得到的题目id集合，加入查询条件
         if(filterProblemIds != null) {
             wrapper.in(ProblemEntity::getProblemId, filterProblemIds);
         }
@@ -162,10 +161,10 @@ public class ProblemServiceImpl extends ServiceImpl<ProblemMapper, ProblemEntity
                     .like(ProblemEntity::getDescription, keyword);
         }
 
-        // 排除已删除 (逻辑删除MP会自动处理，这里只处理 status=0 隐藏的情况)
+        // 过滤掉隐藏的题目
         wrapper.eq(ProblemEntity::getStatus, ProblemStatusEnum.NORMAL.getCode());
 
-        // 处理排序情况
+        // 处理排序
         String sortField = queryRequest.getSortField();
         String sortOrder = queryRequest.getSortOrder();
         if (StringUtils.hasText(sortField)) {
@@ -189,14 +188,52 @@ public class ProblemServiceImpl extends ServiceImpl<ProblemMapper, ProblemEntity
         }
 
         // ================= 4. 批量填充标签 (Filling) =================
+        // 1. 找出所有题目id
+        List<Long> pids = records.stream().map(ProblemEntity::getProblemId).collect(Collectors.toList());
 
+        // 2. 找出所有题目和标签的关联记录
+        LambdaQueryWrapper<ProblemTagRelationEntity> relationWrapper = new LambdaQueryWrapper<>();
+        relationWrapper.in(ProblemTagRelationEntity::getProblemId, pids);
+        List<ProblemTagRelationEntity> relationList = problemTagRelationMapper.selectList(relationWrapper);
+
+        // 3. 先查出所有 Tag 详情，存放到哈希表中（如果后面遍历题目再每个题目去搜索 Tag 详情，会导致性能问题）
+        Map<Long, ProblemTagVO> tagVoMap = new HashMap<>(); // Key: TagId, Value: ProblemTagVO
+        if (CollectionUtil.isNotEmpty(relationList)) {
+            Set<Long> allTagIds = relationList.stream().map(ProblemTagRelationEntity::getTagId).collect(Collectors.toSet());
+            if (CollectionUtil.isNotEmpty(allTagIds)) {
+                List<ProblemTagEntity> tags = problemTagMapper.selectBatchIds(allTagIds);
+                // 将 Entity 转为 VO 并存入 Map
+                tagVoMap = tags.stream().collect(Collectors.toMap(
+                        ProblemTagEntity::getTagId,
+                        entity -> {
+                            ProblemTagVO vo = new ProblemTagVO();
+                            vo.setTagId(entity.getTagId());
+                            vo.setTagName(entity.getTagName());
+                            vo.setTagColor(entity.getTagColor()); // 关键：拿到颜色！
+                            return vo;
+                        }
+                ));
+            }
+        }
+
+        // 4. 将题目和标签关系进行分组
+        Map<Long, List<ProblemTagVO>> pTagMap = new HashMap<>(); // Key: ProblemId, Value: List<ProblemTagVO>
+        for (ProblemTagRelationEntity r : relationList) {
+            ProblemTagVO tagVO = tagVoMap.get(r.getTagId()); // 有了哈希表，直接从里面取，效率高
+            if (tagVO != null) {
+                pTagMap.computeIfAbsent(r.getProblemId(), k -> new ArrayList<>()).add(tagVO);
+            }
+        }
 
         // ================= 5. 组装 VO =================
         Page<ProblemVO> problemVOPage = new Page<>(current, size, problemEntityPage.getTotal());
-        List<ProblemVO> list = problemEntityPage.getRecords().stream()
-                .map(ProblemVO::objToVo)
-                .collect(Collectors.toList());
-        problemVOPage.setRecords(list);
+        List<ProblemVO> collect = records.stream()
+                .map(entity -> {
+                    ProblemVO problemVO = ProblemVO.objToVo(entity);
+                    problemVO.setTags(pTagMap.get(entity.getProblemId()));
+                    return problemVO;
+                }).collect(Collectors.toList());
+        problemVOPage.setRecords(collect);
         return problemVOPage;
     }
 }
