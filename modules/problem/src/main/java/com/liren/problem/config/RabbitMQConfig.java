@@ -1,27 +1,27 @@
 package com.liren.problem.config;
 
 import com.liren.common.core.constant.Constants;
-import org.springframework.amqp.core.Binding;
-import org.springframework.amqp.core.BindingBuilder;
-import org.springframework.amqp.core.DirectExchange;
-import org.springframework.amqp.core.Queue;
+import org.apache.tomcat.util.bcel.Const;
+import org.springframework.amqp.core.*;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
 public class RabbitMQConfig {
-    @Bean
+    @Bean("judgeQueue")
     public Queue judgeQueue() {
-        return new Queue(Constants.JUDGE_QUEUE, true);
+        return QueueBuilder.durable(Constants.JUDGE_QUEUE).build();
     }
 
-    @Bean
+    @Bean("judgeExchange")
     public DirectExchange judgeExchange() {
-        return new DirectExchange(Constants.JUDGE_EXCHANGE, true, false);
+        return ExchangeBuilder.directExchange(Constants.JUDGE_EXCHANGE).build();
     }
 
-    @Bean
-    public Binding binding() {
-        return BindingBuilder.bind(judgeQueue()).to(judgeExchange()).with(Constants.JUDGE_ROUTING_KEY);
+    @Bean("judgeBinding")
+    public Binding binding(@Qualifier("judgeQueue") Queue queue,
+                           @Qualifier("judgeExchange") DirectExchange exchange) {
+        return BindingBuilder.bind(queue).to(exchange).with(Constants.JUDGE_ROUTING_KEY);
     }
 }

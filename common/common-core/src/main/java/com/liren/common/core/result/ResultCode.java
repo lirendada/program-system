@@ -35,6 +35,7 @@ public enum ResultCode {
     SUBJECT_NOT_FOUND(6006, "题目不存在"),
     SUBJECT_TITLE_EXIST(6007, "题目名称已存在，请勿重复添加"),
     USER_IS_FORBIDDEN(6008, "用户已被禁用"),
+    UPDATE_PROBLEM_ERROR(6009, "更新题目信息失败"),
 
     /* ===================== 程序缺陷类（9xxx） ===================== */
     NULL_POINTER(9001, "空指针异常"),

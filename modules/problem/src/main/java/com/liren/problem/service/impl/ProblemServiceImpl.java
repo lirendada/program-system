@@ -5,6 +5,7 @@ import cn.hutool.core.collection.CollectionUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.liren.api.problem.dto.ProblemSubmitUpdateDTO;
 import com.liren.common.core.constant.Constants;
 import com.liren.common.core.context.UserContext;
 import com.liren.common.core.enums.ProblemStatusEnum;
@@ -25,6 +26,7 @@ import com.liren.problem.mapper.ProblemTagRelationMapper;
 import com.liren.problem.service.IProblemService;
 import com.liren.problem.vo.ProblemTagVO;
 import com.liren.problem.vo.ProblemVO;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -34,6 +36,7 @@ import org.springframework.util.StringUtils;
 import java.util.*;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 public class ProblemServiceImpl extends ServiceImpl<ProblemMapper, ProblemEntity> implements IProblemService {
     @Autowired
@@ -328,7 +331,27 @@ public class ProblemServiceImpl extends ServiceImpl<ProblemMapper, ProblemEntity
         // 消息内容通常发 ID 即可，消费者再去查库。或者把关键信息都发过去减少查库。
         // 这里我们发 submitId 过去
         rabbitTemplate.convertAndSend(Constants.JUDGE_EXCHANGE, Constants.JUDGE_ROUTING_KEY, submitRecord.getSubmitId());
+        log.info("Send submitId={} to MQ", submitRecord.getSubmitId());
         return submitRecord.getSubmitId();
+    }
+
+
+    /**
+     * 更新提交结果
+     */
+    @Override
+    public Boolean updateSubmitResult(ProblemSubmitUpdateDTO updateDTO) {
+        ProblemSubmitRecordEntity entity = new ProblemSubmitRecordEntity();
+        entity.setSubmitId(updateDTO.getSubmitId());
+
+        if (updateDTO.getStatus() != null) entity.setStatus(updateDTO.getStatus());
+        if (updateDTO.getJudgeResult() != null) entity.setJudgeResult(updateDTO.getJudgeResult());
+        if (updateDTO.getTimeCost() != null) entity.setTimeCost(updateDTO.getTimeCost());
+        if (updateDTO.getMemoryCost() != null) entity.setMemoryCost(updateDTO.getMemoryCost());
+        if (updateDTO.getErrorMessage() != null) entity.setErrorMessage(updateDTO.getErrorMessage());
+
+        // MybatisPlus 根据 ID 更新非空字段
+        return problemSubmitMapper.updateById(entity) > 0;
     }
 
 
