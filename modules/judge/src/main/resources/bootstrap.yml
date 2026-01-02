@@ -20,3 +20,8 @@ spring:
         shared-configs:
           - data-id: common.yaml
             refresh: true
+
+oj:
+  judge:
+    docker:
+      host: tcp://49.235.136.223:2375  # 换成你 Ubuntu 的真实IP

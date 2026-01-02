@@ -18,4 +18,10 @@ public class Constants {
      * 路由键
      */
     public static final String JUDGE_ROUTING_KEY = "oj.judge";
+
+    /**
+     * 判题机镜像
+     */
+    public static final String IMAGE = "openjdk:8-alpine";
+    public static final String TIME_OUT = "10000"; // 默认超时 10s
 }

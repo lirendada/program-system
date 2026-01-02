@@ -6,23 +6,20 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.liren.api.problem.dto.ProblemSubmitUpdateDTO;
+import com.liren.api.problem.dto.SubmitRecordDTO;
+import com.liren.api.problem.dto.TestCaseDTO;
 import com.liren.common.core.constant.Constants;
 import com.liren.common.core.context.UserContext;
 import com.liren.common.core.enums.ProblemStatusEnum;
+import com.liren.common.core.result.Result;
 import com.liren.common.core.result.ResultCode;
 import com.liren.problem.dto.ProblemAddDTO;
 import com.liren.problem.dto.ProblemQueryRequest;
 import com.liren.problem.dto.ProblemSubmitDTO;
-import com.liren.problem.entity.ProblemSubmitRecordEntity;
-import com.liren.problem.mapper.ProblemSubmitMapper;
+import com.liren.problem.entity.*;
+import com.liren.problem.mapper.*;
 import com.liren.problem.vo.ProblemDetailVO;
-import com.liren.problem.entity.ProblemEntity;
-import com.liren.problem.entity.ProblemTagEntity;
-import com.liren.problem.entity.ProblemTagRelationEntity;
 import com.liren.problem.exception.ProblemException;
-import com.liren.problem.mapper.ProblemMapper;
-import com.liren.problem.mapper.ProblemTagMapper;
-import com.liren.problem.mapper.ProblemTagRelationMapper;
 import com.liren.problem.service.IProblemService;
 import com.liren.problem.vo.ProblemTagVO;
 import com.liren.problem.vo.ProblemVO;
@@ -50,6 +47,9 @@ public class ProblemServiceImpl extends ServiceImpl<ProblemMapper, ProblemEntity
 
     @Autowired
     private RabbitTemplate rabbitTemplate;
+
+    @Autowired
+    private TestCaseMapper testCaseMapper;
 
     /**
      * 新增题目
@@ -352,6 +352,43 @@ public class ProblemServiceImpl extends ServiceImpl<ProblemMapper, ProblemEntity
 
         // MybatisPlus 根据 ID 更新非空字段
         return problemSubmitMapper.updateById(entity) > 0;
+    }
+
+
+    /**
+     * 获取测试用例
+     */
+    @Override
+    public List<TestCaseDTO> getTestCases(Long problemId) {
+        // 把测试用例都找出来
+        LambdaQueryWrapper<TestCaseEntity> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(TestCaseEntity::getProblemId, problemId);
+        List<TestCaseEntity> caseEntities = testCaseMapper.selectList(wrapper);
+
+        // 转化为DTO返回
+        List<TestCaseDTO> caseDTOS = caseEntities.stream().map(entity -> {
+            TestCaseDTO dto = new TestCaseDTO();
+            dto.setInput(entity.getInput());
+            dto.setOutput(entity.getOutput());
+            return dto;
+        }).collect(Collectors.toList());
+        return caseDTOS;
+    }
+
+
+    /**
+     * 获取提交记录
+     */
+    @Override
+    public SubmitRecordDTO getSubmitRecord(Long submitId) {
+        ProblemSubmitRecordEntity recordEntity = problemSubmitMapper.selectById(submitId);
+        if (recordEntity == null) {
+            throw new ProblemException(ResultCode.SUBMIT_RECORD_NOT_FOUND);
+        }
+
+        SubmitRecordDTO submitRecordDTO = new SubmitRecordDTO();
+        BeanUtil.copyProperties(recordEntity, submitRecordDTO);
+        return submitRecordDTO;
     }
 
 

@@ -1,38 +1,64 @@
 你现在是我的 Java 微服务架构师搭档。我们要继续开发一个基于 Spring Cloud Alibaba 的 **Online Judge (OJ) 在线判题系统**。
+以下是项目的完整背景、架构设计、当前进度和接下来的任务清单：
 
-请读取以下**项目背景**和**当前进度**，并准备好协助我进行下一步开发：
+### 1. 项目背景与技术栈
+* **项目名称**：Liren OJ (Spring Cloud Alibaba 微服务架构)
+* **核心技术**：Spring Boot 3.x, Spring Cloud Alibaba (Nacos), MyBatis-Plus, RabbitMQ, Redis, Docker (Java API), OpenFeign, Spring Cloud Gateway。
+* **架构模式**：前后端分离，微服务架构。
 
-### 1. 项目架构与基础设施
-* **架构**：微服务架构 (Modules: `gateway`, `system`, `user`, `job`, `judge`）
-* **核心栈**：Spring Cloud Alibaba (Nacos), Spring Boot, MyBatis-Plus, MySQL, Redis.
-* **配置中心**：使用 Nacos。
-    * `common.yaml`: Redis, JWT, RabbitMQ 配置。
-    * `gateway-service-dev.yaml`: 网关路由与动态白名单。
-* **鉴权链路**：
-    1.  **Gateway (10020)**: `AuthGlobalFilter` 解析 JWT，校验通过后将 `userId` 放入 HTTP Header (`userId`) 传递给下游。
-    2.  **下游服务**: 引用 `common-web` 模块，通过 `UserInterceptor` 拦截器从 Header 读取 `userId`，存入 `UserContext` (`TransmittableThreadLocal`)。
+### 2. 微服务模块划分 (已建立)
+目前项目包含以下 Maven 模块：
+* **`oj-system` (Root)**: 父工程。
+* **`common`**: 公共模块。
+  * `common-core`: 全局异常、Result 包装类、工具类、UserContext。
+  * `common-web`: WebMvc 配置、拦截器、统一异常处理。
+* **`api`**: **关键模块**。存放 OpenFeign 的接口定义 (`RemoteProblemService`) 和跨服务传输的 DTO (`SubmitRecordDTO`, `TestCaseDTO`, `ProblemSubmitUpdateDTO`)。
+* **`gateway`**: 网关服务 (10020)。负责 JWT 鉴权 (`AuthGlobalFilter`)，白名单校验，透传 `userId` 到下游。
+* **`modules` (业务服务)**:
+  * **`user`(8004)**: 用户服务 (已由 System 模块暂代，UserContext 逻辑已通)。
+  * **`problem` (8006)**: 题目微服务。负责题目管理、标签管理、测试用例管理、接收用户提交。
+  * **`judge` (8002)**: 判题微服务。**消费者**，负责监听 MQ，调用 Docker 沙箱判题。
+  * **`system` (8003)**: 
+* 剩下的细节请你结合我给你的划分图片
 
-### 2. 数据库与实体现状
-* **表结构**：
-    * `tb_problem`: 题目主表 (包含 `submit_num`, `accepted_num` 统计字段，**不含** tags 字段)。
-    * `tb_problem_tag`: 题目标签字典表。
-    * `tb_problem_tag_relation`: 题目与标签关联表 (多对多)。
-    * `tb_sys_user`：管理员表
-    * `tb_user`：c端用户表
-    * 各表到时候你直接参考 /deploy/sql 文件
-* **实体类**：
-    * `ProblemEntity`: 对应 `tb_problem`。
-    * `ProblemVO`: 题目列表页展示对象（脱敏，含 `List<String> tags`，无答案/用例）。
-    * 其它的你也参考项目代码即可
+### 3. 核心业务逻辑 (已实现)
+目前最核心的 **“提交-判题-回写”** 全链路已打通，流程如下：
 
-### 3. 我们刚刚完成的任务
-我们正在开发 **“题目列表分页查询接口”** (`/system/problem/list/page`)，主要完成了以下重构：
-1.  **基建**：在 `common-core` 封装了 `PageRequest` 分页基类和 MP 分页插件配置。
-2.  **DTO/VO**：创建了 `ProblemQueryRequest` (支持 id, title, difficulty, tags 筛选) 和 `ProblemVO`。
-3.  **核心业务逻辑** (`ProblemServiceImpl`)：
-    * 实现了复杂的 **标签关联查询** 逻辑。
-    * 逻辑：先根据 tag name 查 `tb_tag` -> 查 `tb_problem_tag` 拿到 problemId 列表 -> 再去 `tb_problem` 查分页 -> 最后批量查关联标签填充到 VO。
+1.  **提交 (Producer)**: 用户调用 `POST /problem/submit` -> `oj-problem` 存入数据库 (`status=10` 待判题) -> 发送 `submitId` (Long) 到 RabbitMQ。
+2.  **消费 (Consumer)**: `oj-judge` 监听 MQ -> 收到 `submitId`。
+3.  **反查数据 (Feign)**: `oj-judge` 通过 `RemoteProblemService` 调用 `oj-problem`：
+  * 获取提交详情 (代码、语言)。
+  * 获取测试用例 (Input/Output 列表)。
+4.  **沙箱执行 (Docker)**:
+  * 使用 `docker-java` 客户端连接远程 Ubuntu Docker (TCP 2375)。
+  * 流程：创建容器 (`openjdk:8-alpine`) -> 传输代码与输入 (TAR流) -> 编译 (`javac`) -> 运行 (`java`) -> 收集输出 -> 销毁容器。
+5.  **结果比对**: 对比沙箱输出与标准输出，判定 AC/WA。
+6.  **结果回写 (Feign)**: `oj-judge` 调用 `oj-problem` 更新数据库状态 (`status=30`, `result=1`, `time_cost` 等)。
 
-### 4. 待解决的问题与下一步计划
-**目前状态**：代码刚刚写完，但是还在考虑tags字段的问题，并且还未进行最终测试。
+### 4. 数据库设计 (关键表)
+* `tb_problem`: 题目基本信息 (description, time_limit 等)。
+* `tb_submit_record`: 提交记录 (submit_id, code, status, judge_result, case_result JSON)。
+* `tb_test_case`: 题目的测试用例 (input, output)。
+* `tb_problem_tag`, `tb_problem_tag_relation`: 题目与标签关联。
 
+### 5. 当前代码状态 (关键细节)
+* **Docker沙箱**: 实现了 `JavaDockerCodeSandbox`，支持 Java 语言的编译运行，解决了文件流传输问题。
+* **Feign配置**: 解决了路径冲突问题 (`/inner/submit/{id}` 和 `/inner/test-case/{id}`)。
+* **负载均衡**: 解决了 Spring Cloud LoadBalancer 缺少 Caffeine 依赖的警告。
+* **鉴权**: 网关已配置 JWT 解析，Feign 内部调用不鉴权 (通过 URL 前缀区分或内网隔离，目前逻辑是通的)。
+
+### 6. 接下来的任务 (Next Steps)
+我们暂停在了 **“完善业务闭环”** 这一步。
+
+**当前任务：实现提交记录查询接口**
+* **需求**: 前端需要轮询提交结果，或者展示提交列表。
+* **位置**: `oj-problem` 服务。
+* **接口**: `POST /problem/submit/list` (分页查询)。
+* **逻辑**: 需要支持按 `problemId`、`userId`、`status` 筛选。返回的 VO 需要脱敏 (不包含大量代码)，并包含题目名称 (需要组装数据)。
+
+**后续规划**:
+1.  **沙箱增强**: 目前沙箱资源限制是写死的，需要改为读取数据库 `tb_problem` 中的 `time_limit` 和 `memory_limit` 动态传给 Docker。
+2.  **策略模式**: 重构 `JudgeReceiver`，支持多语言 (Python, C++) 判题策略。
+3.  **安全增强**: 限制 Docker 容器的网络访问、最大输出大小等。
+
+请基于以上上下文，继续辅助我完成 **“提交记录查询接口”** 的开发。
