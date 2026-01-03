@@ -8,6 +8,7 @@ import com.github.dockerjava.api.command.ExecCreateCmdResponse;
 import com.github.dockerjava.api.command.InspectExecResponse;
 import com.github.dockerjava.api.model.*;
 import com.liren.common.core.constant.Constants;
+import com.liren.common.core.enums.SandboxRunStatusEnum;
 import com.liren.judge.sandbox.CodeSandbox;
 import com.liren.judge.sandbox.model.ExecuteCodeRequest;
 import com.liren.judge.sandbox.model.ExecuteCodeResponse;
@@ -16,7 +17,6 @@ import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
-import org.apache.commons.io.IOUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StopWatch;
@@ -35,7 +35,6 @@ public class JavaDockerCodeSandbox implements CodeSandbox {
     private DockerClient dockerClient;
 
     @Override
-    // TODO:将常数等都抽出来放到常量类中
     public ExecuteCodeResponse executeCode(ExecuteCodeRequest executeCodeRequest) {
         String code = executeCodeRequest.getCode();
         List<String> inputList = executeCodeRequest.getInputList();
@@ -48,10 +47,10 @@ public class JavaDockerCodeSandbox implements CodeSandbox {
             // 2. 创建容器
             log.info("创建容器中...");
             HostConfig hostConfig = new HostConfig();
-            hostConfig.withMemory(100 * 1000 * 1000L); // 限制内存 100MB
-            hostConfig.withCpuCount(1L); // 限制 CPU 1核
+            hostConfig.withMemory(Constants.SANDBOX_MEMORY_LIMIT); // 限制内存 100MB
+            hostConfig.withCpuCount(Constants.SANDBOX_CPU_COUNT); // 限制 CPU 1核
 
-            CreateContainerCmd containerCmd = dockerClient.createContainerCmd(Constants.IMAGE)
+            CreateContainerCmd containerCmd = dockerClient.createContainerCmd(Constants.SANDBOX_IMAGE)
                     .withHostConfig(hostConfig)
                     .withAttachStdin(true)
                     .withAttachStderr(true)
@@ -76,7 +75,7 @@ public class JavaDockerCodeSandbox implements CodeSandbox {
             if (compileMsg.getExitValue() != 0) {
                 // 编译失败
                 return ExecuteCodeResponse.builder()
-                        .status(3) // 3-编译错误
+                        .status(SandboxRunStatusEnum.COMPILE_ERROR.getCode()) // 3-编译错误
                         .message("编译错误: " + compileMsg.getErrorMessage())
                         .build();
             }
@@ -106,7 +105,7 @@ public class JavaDockerCodeSandbox implements CodeSandbox {
 
                 if (runMsg.getExitValue() != 0) {
                     return ExecuteCodeResponse.builder()
-                            .status(2) // 2-运行错误
+                            .status(SandboxRunStatusEnum.RUNTIME_ERROR.getCode()) // 2-运行错误
                             .message("运行错误: " + runMsg.getErrorMessage())
                             .build();
                 }
@@ -119,14 +118,14 @@ public class JavaDockerCodeSandbox implements CodeSandbox {
             judgeInfo.setMemory(0L); // TODO:Docker 较难精确获取每次运行内存，暂存0，后续可优化
 
             return ExecuteCodeResponse.builder()
-                    .status(1) // 1-正常
+                    .status(SandboxRunStatusEnum.NORMAL.getCode()) // 1-正常
                     .outputList(outputList)
                     .judgeInfo(judgeInfo)
                     .build();
 
         } catch (Exception e) {
             log.error("沙箱执行异常", e);
-            return ExecuteCodeResponse.builder().status(4).message(e.getMessage()).build();
+            return ExecuteCodeResponse.builder().status(SandboxRunStatusEnum.SYSTEM_ERROR.getCode()).message(e.getMessage()).build();
         } finally {
             // 8. 销毁容器 (非常重要！否则服务器内存会炸)
             if (containerId != null) {
@@ -202,7 +201,7 @@ public class JavaDockerCodeSandbox implements CodeSandbox {
                                 stdout.append(new String(frame.getPayload()));
                             }
                         }
-                    }).awaitCompletion(5, TimeUnit.SECONDS); // 5秒超时
+                    }).awaitCompletion(Constants.SANDBOX_TIME_OUT, TimeUnit.SECONDS);
 
             // 3. 获取退出码
             InspectExecResponse response = dockerClient.inspectExecCmd(execCreateCmdResponse.getId()).exec();

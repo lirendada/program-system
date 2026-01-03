@@ -21,8 +21,8 @@ public class ProblemSubmitRecordEntity extends BaseTimeEntity {
 
     private String code;         // 用户提交的代码
     private String language;     // 用户选择的编程语言
-    private Integer status;      // 判题状态: 10-待判题, 20-判题中, 30-结束
-    private Integer judgeResult; // 判题结果: 0-AC, 1-WA, 2-TLE, 3-MLE, 4-RE, 5-CE...
+    private Integer status;      // 判题状态(对应 ProblemStatusEnum)
+    private Integer judgeResult; // 判题结果(对应 JudgeResultEnum)
     private Integer timeCost;    // 最大耗时（ms）
     private Integer memoryCost;  // 最大内存（KB）
     private String errorMessage; // 错误信息

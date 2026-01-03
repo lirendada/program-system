@@ -23,7 +23,7 @@ public class ExecuteCodeResponse {
     private String message;
 
     /**
-     * 执行状态 (1-正常, 2-代码错误, 3-编译错误, 4-系统错误)
+     * 执行状态 (对应SandboxRunStatusEnum，1-正常, 2-运行错误, 3-编译错误, 4-系统错误)
      */
     private Integer status;
 
