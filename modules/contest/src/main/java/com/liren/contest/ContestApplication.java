@@ -1,6 +1,6 @@
 package com.liren.contest;
 
-import com.liren.api.problem.api.ProblemInterface;
+import com.liren.api.problem.api.problem.ProblemInterface;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.cloud.openfeign.EnableFeignClients;

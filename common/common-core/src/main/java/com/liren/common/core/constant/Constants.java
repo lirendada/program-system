@@ -46,4 +46,19 @@ public class Constants {
      * 沙箱 CPU 限制 (核数)
      */
     public static final Long SANDBOX_CPU_COUNT = 1L;
+
+
+
+    // ========= 排行榜 =========
+    public static final String USER_SOLVED_KEY_PREFIX = "oj:solved:"; // 记录用户已解决题目的 Set Key 前缀: oj:solved:{userId}
+
+    // 排行榜 Key 前缀
+    public static final String RANK_TOTAL_KEY = "oj:rank:total";
+    public static final String RANK_DAILY_PREFIX = "oj:rank:daily:";   // + yyyyMMdd
+    public static final String RANK_WEEKLY_PREFIX = "oj:rank:weekly:"; // + yyyyw (年份+周数)
+    public static final String RANK_MONTHLY_PREFIX = "oj:rank:monthly:"; // + yyyyMM
+
+    public static final Long RANK_DAILY_EXPIRE_TIME = 3l; // 日排行榜过期时间
+
+    public static final Long RANK_SUBMIT_ADD_COUNT = 1l; // 每提交一次增加的分数
 }

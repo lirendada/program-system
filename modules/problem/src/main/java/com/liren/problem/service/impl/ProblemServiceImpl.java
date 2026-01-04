@@ -5,17 +5,18 @@ import cn.hutool.core.collection.CollectionUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.liren.api.problem.api.ContestInterface;
-import com.liren.api.problem.dto.ProblemBasicInfoDTO;
-import com.liren.api.problem.dto.ProblemSubmitUpdateDTO;
-import com.liren.api.problem.dto.SubmitRecordDTO;
-import com.liren.api.problem.dto.TestCaseDTO;
+import com.liren.api.problem.api.contest.ContestInterface;
+import com.liren.api.problem.dto.problem.ProblemBasicInfoDTO;
+import com.liren.api.problem.dto.problem.ProblemSubmitUpdateDTO;
+import com.liren.api.problem.dto.problem.SubmitRecordDTO;
+import com.liren.api.problem.dto.problem.TestCaseDTO;
 import com.liren.common.core.constant.Constants;
 import com.liren.common.core.context.UserContext;
+import com.liren.common.core.enums.JudgeResultEnum;
 import com.liren.common.core.enums.ProblemStatusEnum;
-import com.liren.common.core.exception.BizException;
 import com.liren.common.core.result.Result;
 import com.liren.common.core.result.ResultCode;
+import com.liren.common.redis.RankingManager;
 import com.liren.problem.dto.ProblemAddDTO;
 import com.liren.problem.dto.ProblemQueryRequest;
 import com.liren.problem.dto.ProblemSubmitDTO;
@@ -57,6 +58,9 @@ public class ProblemServiceImpl extends ServiceImpl<ProblemMapper, ProblemEntity
 
     @Autowired
     private ContestInterface contestService;
+
+    @Autowired
+    private RankingManager rankingManager;
 
     /**
      * 新增题目
@@ -387,8 +391,26 @@ public class ProblemServiceImpl extends ServiceImpl<ProblemMapper, ProblemEntity
         if (updateDTO.getMemoryCost() != null) entity.setMemoryCost(updateDTO.getMemoryCost());
         if (updateDTO.getErrorMessage() != null) entity.setErrorMessage(updateDTO.getErrorMessage());
 
-        // MybatisPlus 根据 ID 更新非空字段
-        return problemSubmitMapper.updateById(entity) > 0;
+        // 1. 执行数据库更新
+        boolean updateSuccess = problemSubmitMapper.updateById(entity) > 0;
+
+        // 2. 【新增排行榜逻辑】更新成功 && 结果是 AC (Accepted)
+        if (updateSuccess && JudgeResultEnum.ACCEPTED.getCode().equals(updateDTO.getJudgeResult())) {
+            try {
+                // 需要查询完整的提交记录，获取 userId 和 problemId (updateDTO 里没有这些信息)
+                ProblemSubmitRecordEntity submitRecord = problemSubmitMapper.selectById(updateDTO.getSubmitId());
+
+                if (submitRecord != null) {
+                    // 调用 Redis 管理器更新排行榜 (自动去重 + 更新日/周/总榜)
+                    rankingManager.userAcProblem(submitRecord.getUserId(), submitRecord.getProblemId());
+                }
+            } catch (Exception e) {
+                // 捕获异常，防止因为 Redis 问题导致整个判题流程报错（排行榜丢一两个数据问题不大，判题结果不能丢）
+                log.error("更新排行榜失败: submitId={}", updateDTO.getSubmitId(), e);
+            }
+        }
+
+        return updateSuccess;
     }
 
 

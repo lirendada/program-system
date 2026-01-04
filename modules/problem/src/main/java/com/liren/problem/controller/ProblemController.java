@@ -1,6 +1,8 @@
 package com.liren.problem.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.liren.api.problem.api.user.UserInterface;
+import com.liren.api.problem.dto.user.UserBasicInfoDTO;
 import com.liren.common.core.result.Result;
 import com.liren.problem.dto.ProblemAddDTO;
 import com.liren.problem.dto.ProblemQueryRequest;
@@ -8,6 +10,7 @@ import com.liren.problem.dto.ProblemSubmitDTO;
 import com.liren.problem.vo.ProblemDetailVO;
 import com.liren.problem.service.IProblemService;
 import com.liren.problem.vo.ProblemVO;
+import com.liren.problem.vo.RankItemVO;
 import com.liren.problem.vo.SubmitRecordVO;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -15,16 +18,32 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+
+@Slf4j
 @RestController
 @RequestMapping("/problem")
 @Tag(name = "题目管理API")
 public class ProblemController {
     @Autowired
     private IProblemService problemService;
+
+    @Autowired
+    private UserInterface userService;
+
+    // 注入 RankingManager
+    @Autowired
+    private com.liren.common.redis.RankingManager rankingManager;
 
     @PostMapping("/add")
     @Operation(
@@ -115,5 +134,81 @@ public class ProblemController {
     )
     public Result<SubmitRecordVO> getSubmitResult(@PathVariable("submitId") Long submitId) {
         return Result.success(problemService.getSubmitRecord(submitId));
+    }
+
+
+    @GetMapping("/rank/total")
+    @Operation(summary = "获取总榜 (Top 10)")
+    public Result<List<RankItemVO>> getTotalRank() {
+        return Result.success(getRankList(rankingManager.getTotalRankTopN(10)));
+    }
+
+    @GetMapping("/rank/daily")
+    @Operation(summary = "获取日榜 (Top 10)")
+    public Result<List<RankItemVO>> getDailyRank() {
+        return Result.success(getRankList(rankingManager.getDailyRankTopN(10)));
+    }
+
+    @GetMapping("/rank/weekly")
+    @Operation(summary = "获取周榜 (Top 10)")
+    public Result<List<RankItemVO>> getWeeklyRank() {
+        return Result.success(getRankList(rankingManager.getWeeklyRankTopN(10)));
+    }
+
+    @GetMapping("/rank/monthly")
+    @Operation(summary = "获取月榜 (Top 10)")
+    public Result<List<RankItemVO>> getMonthlyRank() {
+        return Result.success(getRankList(rankingManager.getMonthlyRankTopN(10)));
+    }
+
+    // 封装通用转换逻辑
+    private List<RankItemVO> getRankList(Set<Object> topUserIds) {
+        if (topUserIds == null || topUserIds.isEmpty()) {
+            return new ArrayList<>();
+        }
+
+        // 1. 提取所有用户 ID
+        List<Long> userIdList = new ArrayList<>();
+        for (Object idObj : topUserIds) {
+            userIdList.add(Long.valueOf(idObj.toString()));
+        }
+
+        // 2. 【核心】远程批量查询用户信息
+        Map<Long, UserBasicInfoDTO> userMap = null;
+        try {
+            Result<List<UserBasicInfoDTO>> userResult = userService.getBatchUserBasicInfo(userIdList);
+            if (userResult.isSuccess() && userResult.getData() != null) {
+                // 转成 Map<UserId, UserDto> 方便后续快速查找
+                userMap = userResult.getData().stream()
+                        .collect(Collectors.toMap(UserBasicInfoDTO::getId, Function.identity(), (k1, k2) -> k1));
+            }
+        } catch (Exception e) {
+            // 远程调用失败不要崩，降级处理 (只显示ID)
+             log.error("远程获取用户信息失败", e);
+        }
+
+        // 3. 组装 VO
+        List<RankItemVO> resultList = new ArrayList<>();
+        for (Long userId : userIdList) {
+            RankItemVO vo = new RankItemVO();
+            vo.setUserId(userId);
+
+            // 获取分数
+            vo.setAcCount(rankingManager.getUserTotalScore(userId));
+
+            // 填充用户信息
+            if (userMap != null && userMap.containsKey(userId)) {
+                UserBasicInfoDTO user = userMap.get(userId);
+                vo.setNickname(user.getNickname());
+                vo.setAvatar(user.getAvatar());
+            } else {
+                // 兜底显示
+                vo.setNickname("用户" + userId);
+                vo.setAvatar(""); // 或者默认头像 URL
+            }
+
+            resultList.add(vo);
+        }
+        return resultList;
     }
 }

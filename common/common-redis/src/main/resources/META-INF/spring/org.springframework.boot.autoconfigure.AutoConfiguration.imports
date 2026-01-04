@@ -1,2 +1,2 @@
 com.liren.common.redis.RedisConfig
-com.liren.common.redis.RedisUtil
+com.liren.common.redis.RankingManager

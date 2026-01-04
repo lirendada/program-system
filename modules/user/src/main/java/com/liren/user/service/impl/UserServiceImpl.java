@@ -1,8 +1,11 @@
 package com.liren.user.service.impl;
 
+import cn.hutool.core.collection.CollectionUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.liren.api.problem.dto.user.UserBasicInfoDTO;
 import com.liren.common.core.entity.UserEntity;
 import com.liren.common.core.enums.UserStatusEnum;
+import com.liren.common.core.result.Result;
 import com.liren.common.core.result.ResultCode;
 import com.liren.common.core.utils.BCryptUtil;
 import com.liren.common.core.utils.JwtUtil;
@@ -12,6 +15,10 @@ import com.liren.user.mapper.UserMapper;
 import com.liren.user.service.IUserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class UserServiceImpl implements IUserService {
@@ -43,5 +50,30 @@ public class UserServiceImpl implements IUserService {
 
         // 4. 生成token进行返回
         return JwtUtil.createToken(user.getUserId());
+    }
+
+
+    /**
+     * 获取批量用户基本信息
+     */
+    @Override
+    public List<UserBasicInfoDTO> getBatchUserBasicInfo(List<Long> userIds) {
+        if(CollectionUtil.isEmpty(userIds)) {
+            return new ArrayList<>();
+        }
+
+        List<UserEntity> users = userMapper.getBatchUser(userIds);
+        if(CollectionUtil.isEmpty(users)) {
+            return new ArrayList<>();
+        }
+
+        List<UserBasicInfoDTO> infoDTOS = users.stream().map(user -> {
+            UserBasicInfoDTO userBasicInfoDTO = new UserBasicInfoDTO();
+            userBasicInfoDTO.setId(user.getUserId());
+            userBasicInfoDTO.setNickname(user.getNickName());
+            userBasicInfoDTO.setAvatar(user.getAvatar());
+            return userBasicInfoDTO;
+        }).collect(Collectors.toList());
+        return infoDTOS;
     }
 }

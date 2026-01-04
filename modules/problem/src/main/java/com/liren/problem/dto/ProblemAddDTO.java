@@ -1,6 +1,6 @@
 package com.liren.problem.dto;
 
-import com.liren.api.problem.dto.TestCaseDTO;
+import com.liren.api.problem.dto.problem.TestCaseDTO;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;

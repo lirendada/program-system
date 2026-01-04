@@ -1,6 +1,6 @@
 package com.liren.contest.controller;
 
-import com.liren.api.problem.api.ContestInterface;
+import com.liren.api.problem.api.contest.ContestInterface;
 import com.liren.common.core.result.Result;
 import com.liren.contest.service.IContestService;
 import io.swagger.v3.oas.annotations.Operation;

@@ -1,9 +1,9 @@
 package com.liren.judge.mq;
 
-import com.liren.api.problem.api.ProblemInterface;
-import com.liren.api.problem.dto.ProblemSubmitUpdateDTO;
-import com.liren.api.problem.dto.SubmitRecordDTO;
-import com.liren.api.problem.dto.TestCaseDTO;
+import com.liren.api.problem.api.problem.ProblemInterface;
+import com.liren.api.problem.dto.problem.ProblemSubmitUpdateDTO;
+import com.liren.api.problem.dto.problem.SubmitRecordDTO;
+import com.liren.api.problem.dto.problem.TestCaseDTO;
 import com.liren.common.core.constant.Constants;
 import com.liren.common.core.enums.JudgeResultEnum;
 import com.liren.common.core.enums.SandboxRunStatusEnum;
@@ -14,7 +14,6 @@ import com.liren.judge.exception.JudgeException;
 import com.liren.judge.sandbox.CodeSandbox;
 import com.liren.judge.sandbox.model.ExecuteCodeRequest;
 import com.liren.judge.sandbox.model.ExecuteCodeResponse;
-import com.liren.judge.sandbox.model.JudgeInfo;
 import com.liren.judge.strategy.JudgeContext;
 import com.liren.judge.strategy.JudgeManager;
 import com.rabbitmq.client.Channel;

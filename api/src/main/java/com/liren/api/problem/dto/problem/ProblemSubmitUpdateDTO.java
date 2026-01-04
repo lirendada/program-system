@@ -1,4 +1,4 @@
-package com.liren.api.problem.dto;
+package com.liren.api.problem.dto.problem;
 
 import lombok.Data;
 

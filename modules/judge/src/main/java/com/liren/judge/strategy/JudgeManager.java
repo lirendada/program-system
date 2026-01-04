@@ -1,6 +1,6 @@
 package com.liren.judge.strategy;
 
-import com.liren.api.problem.dto.ProblemSubmitUpdateDTO;
+import com.liren.api.problem.dto.problem.ProblemSubmitUpdateDTO;
 import com.liren.judge.strategy.impl.DefaultJudgeStrategy;
 import org.springframework.stereotype.Component;
 

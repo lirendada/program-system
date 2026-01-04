@@ -1,11 +1,10 @@
-package com.liren.api.problem.api;
+package com.liren.api.problem.api.problem;
 
-import com.liren.api.problem.dto.ProblemBasicInfoDTO;
-import com.liren.api.problem.dto.ProblemSubmitUpdateDTO;
-import com.liren.api.problem.dto.SubmitRecordDTO;
-import com.liren.api.problem.dto.TestCaseDTO;
+import com.liren.api.problem.dto.problem.ProblemBasicInfoDTO;
+import com.liren.api.problem.dto.problem.ProblemSubmitUpdateDTO;
+import com.liren.api.problem.dto.problem.SubmitRecordDTO;
+import com.liren.api.problem.dto.problem.TestCaseDTO;
 import com.liren.common.core.result.Result;
-import lombok.Getter;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;

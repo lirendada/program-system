@@ -1,12 +1,11 @@
 package com.liren.problem.controller;
 
-import com.liren.api.problem.api.ProblemInterface;
-import com.liren.api.problem.dto.ProblemBasicInfoDTO;
-import com.liren.api.problem.dto.ProblemSubmitUpdateDTO;
-import com.liren.api.problem.dto.SubmitRecordDTO;
-import com.liren.api.problem.dto.TestCaseDTO;
+import com.liren.api.problem.api.problem.ProblemInterface;
+import com.liren.api.problem.dto.problem.ProblemBasicInfoDTO;
+import com.liren.api.problem.dto.problem.ProblemSubmitUpdateDTO;
+import com.liren.api.problem.dto.problem.SubmitRecordDTO;
+import com.liren.api.problem.dto.problem.TestCaseDTO;
 import com.liren.common.core.result.Result;
-import com.liren.problem.dto.ProblemAddDTO;
 import com.liren.problem.service.IProblemService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;

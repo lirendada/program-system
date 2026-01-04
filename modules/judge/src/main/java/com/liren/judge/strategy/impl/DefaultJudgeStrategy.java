@@ -1,7 +1,7 @@
 package com.liren.judge.strategy.impl;
 
-import com.liren.api.problem.dto.ProblemSubmitUpdateDTO;
-import com.liren.api.problem.dto.TestCaseDTO;
+import com.liren.api.problem.dto.problem.ProblemSubmitUpdateDTO;
+import com.liren.api.problem.dto.problem.TestCaseDTO;
 import com.liren.common.core.enums.JudgeResultEnum;
 import com.liren.common.core.enums.SandboxRunStatusEnum;
 import com.liren.common.core.enums.SubmitStatusEnum;

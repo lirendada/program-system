@@ -1,6 +1,6 @@
 package com.liren.judge.strategy;
 
-import com.liren.api.problem.dto.TestCaseDTO;
+import com.liren.api.problem.dto.problem.TestCaseDTO;
 import com.liren.judge.sandbox.model.ExecuteCodeResponse;
 import lombok.AllArgsConstructor;
 import lombok.Data;

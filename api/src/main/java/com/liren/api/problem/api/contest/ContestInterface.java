@@ -1,4 +1,4 @@
-package com.liren.api.problem.api;
+package com.liren.api.problem.api.contest;
 
 import com.liren.common.core.result.Result;
 import org.springframework.cloud.openfeign.FeignClient;
