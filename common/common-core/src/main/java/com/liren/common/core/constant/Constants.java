@@ -66,4 +66,6 @@ public class Constants {
 
     // 比赛每道题的分数
     public static final Integer CONTEST_QUESTION_SCORE = 25; // 每道题的分数
+
+    public static final Integer RANK_TOTAL_SIZE = 10; // 排行榜大小
 }

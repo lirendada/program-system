@@ -10,6 +10,7 @@ import com.liren.contest.dto.ContestQueryRequest;
 import com.liren.contest.exception.ContestException;
 import com.liren.contest.service.IContestService;
 import com.liren.contest.vo.ContestProblemVO;
+import com.liren.contest.vo.ContestRankVO;
 import com.liren.contest.vo.ContestVO;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -74,5 +75,11 @@ public class ContestController {
             throw new ContestException(ResultCode.UNAUTHORIZED);
         }
         return Result.success(contestService.registerContest(contestId, userId));
+    }
+
+    @GetMapping("/rank/{contestId}")
+    @Operation(summary = "获取比赛排名")
+    public Result<List<ContestRankVO>> getContestRank(@PathVariable("contestId") Long contestId) {
+        return Result.success(contestService.getContestRank(contestId));
     }
 }

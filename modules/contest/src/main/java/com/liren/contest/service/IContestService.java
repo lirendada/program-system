@@ -7,6 +7,7 @@ import com.liren.contest.dto.ContestProblemAddDTO;
 import com.liren.contest.dto.ContestQueryRequest;
 import com.liren.contest.entity.ContestEntity;
 import com.liren.contest.vo.ContestProblemVO;
+import com.liren.contest.vo.ContestRankVO;
 import com.liren.contest.vo.ContestVO;
 
 import java.util.List;
@@ -66,4 +67,9 @@ public interface IContestService extends IService<ContestEntity> {
      * 根据contestId判断比赛是否正在进行
      */
     Boolean isContestOngoing(Long contestId);
+
+    /**
+     * 获取比赛排名
+     */
+    List<ContestRankVO> getContestRank(Long contestId);
 }

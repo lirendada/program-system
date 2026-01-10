@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.liren.api.problem.api.user.UserInterface;
 import com.liren.api.problem.dto.problem.ProblemSubmitUpdateDTO;
 import com.liren.api.problem.dto.user.UserBasicInfoDTO;
+import com.liren.common.core.constant.Constants;
 import com.liren.common.core.result.Result;
 import com.liren.problem.dto.ProblemAddDTO;
 import com.liren.problem.dto.ProblemQueryRequest;
@@ -141,25 +142,25 @@ public class ProblemController {
     @GetMapping("/rank/total")
     @Operation(summary = "获取总榜 (Top 10)")
     public Result<List<RankItemVO>> getTotalRank() {
-        return Result.success(getRankList(rankingManager.getTotalRankTopN(10)));
+        return Result.success(getRankList(rankingManager.getTotalRankTopN(Constants.RANK_TOTAL_SIZE)));
     }
 
     @GetMapping("/rank/daily")
     @Operation(summary = "获取日榜 (Top 10)")
     public Result<List<RankItemVO>> getDailyRank() {
-        return Result.success(getRankList(rankingManager.getDailyRankTopN(10)));
+        return Result.success(getRankList(rankingManager.getDailyRankTopN(Constants.RANK_TOTAL_SIZE)));
     }
 
     @GetMapping("/rank/weekly")
     @Operation(summary = "获取周榜 (Top 10)")
     public Result<List<RankItemVO>> getWeeklyRank() {
-        return Result.success(getRankList(rankingManager.getWeeklyRankTopN(10)));
+        return Result.success(getRankList(rankingManager.getWeeklyRankTopN(Constants.RANK_TOTAL_SIZE)));
     }
 
     @GetMapping("/rank/monthly")
     @Operation(summary = "获取月榜 (Top 10)")
     public Result<List<RankItemVO>> getMonthlyRank() {
-        return Result.success(getRankList(rankingManager.getMonthlyRankTopN(10)));
+        return Result.success(getRankList(rankingManager.getMonthlyRankTopN(Constants.RANK_TOTAL_SIZE)));
     }
 
     // 封装通用转换逻辑

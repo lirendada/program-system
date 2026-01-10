@@ -6,10 +6,14 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.liren.api.problem.api.problem.ProblemInterface;
+import com.liren.api.problem.api.user.UserInterface;
 import com.liren.api.problem.dto.problem.ProblemBasicInfoDTO;
+import com.liren.api.problem.dto.user.UserBasicInfoDTO;
+import com.liren.common.core.constant.Constants;
 import com.liren.common.core.enums.ContestStatusEnum;
 import com.liren.common.core.result.Result;
 import com.liren.common.core.result.ResultCode;
+import com.liren.common.redis.RankingManager;
 import com.liren.contest.dto.ContestAddDTO;
 import com.liren.contest.dto.ContestProblemAddDTO;
 import com.liren.contest.dto.ContestQueryRequest;
@@ -22,14 +26,16 @@ import com.liren.contest.mapper.ContestProblemMapper;
 import com.liren.contest.mapper.ContestRegistrationMapper;
 import com.liren.contest.service.IContestService;
 import com.liren.contest.vo.ContestProblemVO;
+import com.liren.contest.vo.ContestRankVO;
 import com.liren.contest.vo.ContestVO;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.ZSetOperations;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -42,6 +48,15 @@ public class ContestServiceImpl extends ServiceImpl<ContestMapper, ContestEntity
 
     @Autowired
     private ContestRegistrationMapper contestRegistrationMapper;
+
+    @Autowired
+    private RankingManager rankingManager;
+
+    @Autowired
+    private RedisTemplate<String, Object> redisTemplate;
+
+    @Autowired
+    private UserInterface userInterface;
 
     /**
      * 新增或修改竞赛信息
@@ -309,6 +324,84 @@ public class ContestServiceImpl extends ServiceImpl<ContestMapper, ContestEntity
             return true;
         }
         return false;
+    }
+
+    /**
+     * 获取比赛排名
+     */
+    @Override
+    public List<ContestRankVO> getContestRank(Long contestId) {
+        // 1. 取前 50 名 (Tuple 包含 value=userId, score=totalScore)
+        // 使用 rangeWithScores 可以直接拿到分数，不用再查一次
+        Set<ZSetOperations.TypedTuple<Object>> topUsers =
+                redisTemplate.opsForZSet().reverseRangeWithScores(Constants.RANK_CONTEST_PREFIX + contestId, 0, 50);
+
+        if (topUsers == null || topUsers.isEmpty()) {
+            return new ArrayList<>();
+        }
+
+        List<ContestRankVO> resultList = new ArrayList<>();
+        int rank = 1;
+
+        // 2. 收集所有 UserId 准备批量查用户信息 (优化点)
+        List<Long> userIds = new ArrayList<>();
+
+        for (ZSetOperations.TypedTuple<Object> tuple : topUsers) {
+            Long userId = Long.valueOf(tuple.getValue().toString());
+            userIds.add(userId);
+
+            ContestRankVO vo = new ContestRankVO();
+            vo.setUserId(userId);
+            vo.setRank(rank++);
+            vo.setTotalScore(tuple.getScore().intValue()); // ZSet 的分数即为总分
+
+            // 3. 【核心】获取该用户的题目得分详情 (查 Redis Hash)
+            Map<Object, Object> detailMap = rankingManager.getUserScoreDetail(contestId, userId);
+
+            // 转换 Map<Object, Object> -> Map<Long, Integer>
+            Map<Long, Integer> scoreMap = new HashMap<>();
+            if (detailMap != null) {
+                detailMap.forEach((k, v) -> {
+                    scoreMap.put(Long.valueOf(k.toString()), Integer.parseInt(v.toString()));
+                });
+            }
+            vo.setProblemScores(scoreMap);
+
+            resultList.add(vo);
+        }
+
+        // 4. 填充用户信息 (昵称、头像)
+        // 批量查询用户信息
+        Result<List<UserBasicInfoDTO>> userRes = userInterface.getBatchUserBasicInfo(userIds);
+
+        if (Result.isSuccess(userRes) && userRes.getData() != null) {
+            // 【核心步骤】将 List 转为 Map<UserId, UserDTO>，实现 O(1) 查找
+            Map<Long, UserBasicInfoDTO> userMap = userRes.getData().stream()
+                    .collect(Collectors.toMap(
+                            UserBasicInfoDTO::getId,  // Key: 用户ID
+                            user -> user,                 // Value: 用户对象本身
+                            (existing, replacement) -> existing // 假如(万一)有重复key，保留旧的
+                    ));
+
+            // 遍历榜单，从 Map 中快速填入信息
+            for (ContestRankVO vo : resultList) {
+                UserBasicInfoDTO userInfo = userMap.get(vo.getUserId());
+                if (userInfo != null) {
+                    vo.setNickname(userInfo.getNickname());
+                    vo.setAvatar(userInfo.getAvatar());
+                } else {
+                    // 兜底逻辑：查不到就给默认名
+                    vo.setNickname("用户" + vo.getUserId());
+                }
+            }
+        } else {
+            // 假如批量查询服务挂了，也要给个默认值，别让接口崩
+            for (ContestRankVO vo : resultList) {
+                vo.setNickname("用户" + vo.getUserId());
+            }
+        }
+
+        return resultList;
     }
 
 

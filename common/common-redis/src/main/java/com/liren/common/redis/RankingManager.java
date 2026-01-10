@@ -9,8 +9,11 @@ import org.springframework.stereotype.Component;
 import java.time.LocalDateTime;
 import java.time.temporal.WeekFields;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+
+import static com.liren.common.core.constant.Constants.CONTEST_USER_SCORE_DETAIL_PREFIX;
 
 /**
  * 排行榜管理器 (支持 日榜/周榜/月榜/总榜)
@@ -75,7 +78,7 @@ public class RankingManager {
 
         // 1. 获取用户在这道题的历史最高分
         // Key: oj:contest:score_detail:{contestId}:{userId}
-        String userScoreKey = Constants.CONTEST_USER_SCORE_DETAIL_PREFIX + contestId + ":" + userId;
+        String userScoreKey = CONTEST_USER_SCORE_DETAIL_PREFIX + contestId + ":" + userId;
 
         // 从 Redis Hash 中获取该题目的旧分数
         Object oldScoreObj = redisTemplate.opsForHash().get(userScoreKey, problemId.toString());
@@ -140,5 +143,15 @@ public class RankingManager {
     public Integer getUserTotalScore(Long userId) {
         Double score = redisTemplate.opsForZSet().score(Constants.RANK_TOTAL_KEY, userId);
         return score == null ? 0 : score.intValue();
+    }
+
+    /**
+     * 【新增】获取用户在某场比赛的详细得分
+     * @return Map<题目ID(String), 分数(Integer)>
+     */
+    public Map<Object, Object> getUserScoreDetail(Long contestId, Long userId) {
+        String key = Constants.CONTEST_USER_SCORE_DETAIL_PREFIX + contestId + ":" + userId;
+        // HGETALL: 获取该用户所有题目的得分
+        return redisTemplate.opsForHash().entries(key);
     }
 }
